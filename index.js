@@ -1,15 +1,22 @@
 const express = require('express');
+const http = require('http');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const socketIo = require('socket.io');
 require('dotenv').config();
 
-console.log('Mongo URI:', process.env.MONGODB_URI);
 const app = express();
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: {
+    origin: '*', // ajusta si usas dominios específicos
+    methods: ['GET', 'POST', 'PUT', 'DELETE']
+  }
+});
+
+const Tarea = require('./models/Tarea');
 const port = process.env.PORT || 3000;
 
-const Tarea = require('./models/Tarea'); // Solo importa el modelo
-
-// Conectar a MongoDB Atlas
 mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -17,25 +24,25 @@ mongoose.connect(process.env.MONGODB_URI, {
 .then(() => console.log('✅ MongoDB conectado'))
 .catch(err => console.error('❌ Error conectando a MongoDB:', err));
 
-// Middlewares
 app.use(cors());
 app.use(express.json());
 
-// Rutas
+// Emitir a todos los clientes conectados
+io.on('connection', (socket) => {
+  console.log('🟢 Cliente conectado');
 
-app.get('/tareas', async (req, res) => {
-  try {
-    const tareas = await Tarea.find();
-    res.json(tareas);
-  } catch (error) {
-    res.status(500).json({ error: 'Error obteniendo tareas' });
-  }
+  socket.on('disconnect', () => {
+    console.log('🔴 Cliente desconectado');
+  });
 });
+
+// 🚀 Emitir eventos desde las rutas
 
 app.post('/tareas', async (req, res) => {
   try {
     const nuevaTarea = new Tarea({ texto: req.body.texto });
     const tareaGuardada = await nuevaTarea.save();
+    io.emit('tareaAgregada', tareaGuardada); // ✨
     res.status(201).json(tareaGuardada);
   } catch (error) {
     res.status(500).json({ error: 'Error guardando tarea' });
@@ -49,7 +56,7 @@ app.put('/tareas/:id', async (req, res) => {
 
     tarea.completada = !tarea.completada;
     const tareaActualizada = await tarea.save();
-
+    io.emit('tareaActualizada', tareaActualizada); // ✨
     res.json(tareaActualizada);
   } catch (error) {
     res.status(500).json({ error: 'Error actualizando tarea' });
@@ -60,27 +67,13 @@ app.delete('/tareas/:id', async (req, res) => {
   try {
     const tareaEliminada = await Tarea.findByIdAndDelete(req.params.id);
     if (!tareaEliminada) return res.status(404).json({ error: 'Tarea no encontrada' });
+    io.emit('tareaEliminada', tareaEliminada._id); // ✨
     res.json(tareaEliminada);
   } catch (error) {
     res.status(500).json({ error: 'Error eliminando tarea' });
   }
 });
 
-// Ruta para estadísticas
-app.get('/tareas/stats', async (req, res) => {
-  try {
-    const total = await Tarea.countDocuments();
-    const completadas = await Tarea.countDocuments({ completada: true });
-    const pendientes = total - completadas;
-    const porcentaje = total === 0 ? 0 : (completadas / total) * 100;
-
-    res.json({ total, completadas, pendientes, porcentaje });
-  } catch (err) {
-    res.status(500).json({ error: 'Error al obtener estadísticas' });
-  }
-});
-
-// Iniciar servidor
-app.listen(port, () => {
-  console.log(`Servidor backend corriendo en http://localhost:${port}`);
+server.listen(port, () => {
+  console.log(`Servidor corriendo en http://localhost:${port}`);
 });
