@@ -1,35 +1,33 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-
-require('dotenv').config(); // para cargar variables de entorno
-
-
 const mongoose = require('mongoose');
 
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('✅ Conectado a MongoDB'))
   .catch((err) => console.error('❌ Error conectando a MongoDB:', err));
 
-
 const app = express();
 const port = process.env.PORT || 3000;
 
-
-// Definir esquema y modelo para tareas
 const tareaSchema = new mongoose.Schema({
   texto: { type: String, required: true },
   completada: { type: Boolean, default: false },
 }, { timestamps: true });
 
+tareaSchema.virtual('id').get(function () {
+  return this._id.toHexString();
+});
+
+tareaSchema.set('toJSON', {
+  virtuals: true,
+});
+
 const Tarea = mongoose.model('Tarea', tareaSchema);
 
-// Middlewares
 app.use(cors());
 app.use(express.json());
 
-// Rutas
-
-// Obtener todas las tareas
 app.get('/tareas', async (req, res) => {
   try {
     const tareas = await Tarea.find();
@@ -39,7 +37,6 @@ app.get('/tareas', async (req, res) => {
   }
 });
 
-// Agregar nueva tarea
 app.post('/tareas', async (req, res) => {
   try {
     const nuevaTarea = new Tarea({ texto: req.body.texto });
@@ -50,7 +47,6 @@ app.post('/tareas', async (req, res) => {
   }
 });
 
-// Cambiar estado completada/no completada
 app.put('/tareas/:id', async (req, res) => {
   try {
     const tarea = await Tarea.findById(req.params.id);
@@ -65,7 +61,6 @@ app.put('/tareas/:id', async (req, res) => {
   }
 });
 
-// Eliminar tarea
 app.delete('/tareas/:id', async (req, res) => {
   try {
     const tareaEliminada = await Tarea.findByIdAndDelete(req.params.id);
@@ -76,7 +71,6 @@ app.delete('/tareas/:id', async (req, res) => {
   }
 });
 
-// Iniciar servidor
 app.listen(port, () => {
   console.log(`Servidor backend corriendo en http://localhost:${port}`);
 });
