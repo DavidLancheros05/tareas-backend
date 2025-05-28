@@ -83,10 +83,6 @@ app.get('/tareas', async (req, res) => {
   }
 });
 
-server.listen(port, () => {
-  console.log(`Servidor corriendo en http://localhost:${port}`);
-});
-
 
 app.get('/tareas/stats', async (req, res) => {
   try {
@@ -103,3 +99,8 @@ app.get('/tareas/stats', async (req, res) => {
     res.status(500).json({ error: 'Error obteniendo estadísticas' });
   }
 });
+
+server.listen(port, () => {
+  console.log(`Servidor corriendo en http://localhost:${port}`);
+});
+
