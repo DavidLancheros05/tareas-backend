@@ -1,22 +1,19 @@
 const express = require('express');
 const cors = require('cors');
+
+require('dotenv').config(); // para cargar variables de entorno
+
+
 const mongoose = require('mongoose');
+
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('✅ Conectado a MongoDB'))
   .catch((err) => console.error('❌ Error conectando a MongoDB:', err));
-require('dotenv').config(); // para cargar variables de entorno
+
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Conectar a MongoDB Atlas
-const uri = process.env.MONGODB_URI;
-mongoose.connect(uri, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('MongoDB conectado'))
-.catch(err => console.error('Error conectando a MongoDB:', err));
 
 // Definir esquema y modelo para tareas
 const tareaSchema = new mongoose.Schema({
