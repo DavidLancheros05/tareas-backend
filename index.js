@@ -99,3 +99,16 @@ app.get('/estadisticas', async (req, res) => {
     res.status(500).json({ error: 'Error al obtener estadísticas' });
   }
 });
+
+app.get('/tareas/stats', async (req, res) => {
+  try {
+    const total = await Tarea.countDocuments();
+    const completadas = await Tarea.countDocuments({ completada: true });
+    const pendientes = total - completadas;
+    const porcentaje = total > 0 ? (completadas / total) * 100 : 0;
+
+    res.json({ total, completadas, pendientes, porcentaje });
+  } catch (error) {
+    res.status(500).json({ error: 'Error al obtener estadísticas' });
+  }
+});
