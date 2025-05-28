@@ -86,3 +86,20 @@ app.get('/tareas', async (req, res) => {
 server.listen(port, () => {
   console.log(`Servidor corriendo en http://localhost:${port}`);
 });
+
+
+app.get('/tareas/stats', async (req, res) => {
+  try {
+    // Ejemplo básico de estadísticas: contar tareas totales y tareas completadas
+    const totalTareas = await Tarea.countDocuments();
+    const tareasCompletadas = await Tarea.countDocuments({ completada: true });
+
+    res.json({
+      total: totalTareas,
+      completadas: tareasCompletadas,
+      pendientes: totalTareas - tareasCompletadas,
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Error obteniendo estadísticas' });
+  }
+});
