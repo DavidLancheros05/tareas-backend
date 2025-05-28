@@ -1,13 +1,15 @@
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-require('dotenv').config(); // ✅ Cargar variables de entorno primero
+require('dotenv').config();
+
 console.log('Mongo URI:', process.env.MONGODB_URI);
 const app = express();
-const Tarea = require('./models/Tarea');
 const port = process.env.PORT || 3000;
 
-// ✅ Conectar a MongoDB Atlas
+const Tarea = require('./models/Tarea'); // Solo importa el modelo
+
+// Conectar a MongoDB Atlas
 mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -15,21 +17,12 @@ mongoose.connect(process.env.MONGODB_URI, {
 .then(() => console.log('✅ MongoDB conectado'))
 .catch(err => console.error('❌ Error conectando a MongoDB:', err));
 
-// ✅ Esquema y modelo
-const tareaSchema = new mongoose.Schema({
-  texto: { type: String, required: true },
-  completada: { type: Boolean, default: false },
-}, { timestamps: true });
-
-const Tarea = mongoose.model('Tarea', tareaSchema);
-
-// ✅ Middlewares
+// Middlewares
 app.use(cors());
 app.use(express.json());
 
-// ✅ Rutas
+// Rutas
 
-// Obtener todas las tareas
 app.get('/tareas', async (req, res) => {
   try {
     const tareas = await Tarea.find();
@@ -39,7 +32,6 @@ app.get('/tareas', async (req, res) => {
   }
 });
 
-// Agregar nueva tarea
 app.post('/tareas', async (req, res) => {
   try {
     const nuevaTarea = new Tarea({ texto: req.body.texto });
@@ -50,7 +42,6 @@ app.post('/tareas', async (req, res) => {
   }
 });
 
-// Cambiar estado completada
 app.put('/tareas/:id', async (req, res) => {
   try {
     const tarea = await Tarea.findById(req.params.id);
@@ -65,7 +56,6 @@ app.put('/tareas/:id', async (req, res) => {
   }
 });
 
-// Eliminar tarea
 app.delete('/tareas/:id', async (req, res) => {
   try {
     const tareaEliminada = await Tarea.findByIdAndDelete(req.params.id);
@@ -76,31 +66,7 @@ app.delete('/tareas/:id', async (req, res) => {
   }
 });
 
-// Iniciar servidor
-app.listen(port, () => {
-  console.log(`Servidor backend corriendo en http://localhost:${port}`);
-});
-
-
-
-
-
-
-
-//neuvo
-
-app.get('/estadisticas', async (req, res) => {
-  try {
-    const total = await Tarea.countDocuments();
-    const completadas = await Tarea.countDocuments({ completada: true });
-    const pendientes = total - completadas;
-
-    res.json({ total, completadas, pendientes });
-  } catch (error) {
-    res.status(500).json({ error: 'Error al obtener estadísticas' });
-  }
-});
-
+// Ruta para estadísticas
 app.get('/tareas/stats', async (req, res) => {
   try {
     const total = await Tarea.countDocuments();
@@ -109,8 +75,12 @@ app.get('/tareas/stats', async (req, res) => {
     const porcentaje = total === 0 ? 0 : (completadas / total) * 100;
 
     res.json({ total, completadas, pendientes, porcentaje });
-  } catch (error) {
-    console.error('Error al obtener estadísticas:', error);
-    res.status(500).json({ mensaje: 'Error al obtener estadísticas' });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al obtener estadísticas' });
   }
+});
+
+// Iniciar servidor
+app.listen(port, () => {
+  console.log(`Servidor backend corriendo en http://localhost:${port}`);
 });
