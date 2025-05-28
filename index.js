@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 require('dotenv').config(); // ✅ Cargar variables de entorno primero
 console.log('Mongo URI:', process.env.MONGODB_URI);
 const app = express();
+const Tarea = require('./models/Tarea');
 const port = process.env.PORT || 3000;
 
 // ✅ Conectar a MongoDB Atlas
@@ -105,10 +106,11 @@ app.get('/tareas/stats', async (req, res) => {
     const total = await Tarea.countDocuments();
     const completadas = await Tarea.countDocuments({ completada: true });
     const pendientes = total - completadas;
-    const porcentaje = total > 0 ? (completadas / total) * 100 : 0;
+    const porcentaje = total === 0 ? 0 : (completadas / total) * 100;
 
     res.json({ total, completadas, pendientes, porcentaje });
   } catch (error) {
-    res.status(500).json({ error: 'Error al obtener estadísticas' });
+    console.error('Error al obtener estadísticas:', error);
+    res.status(500).json({ mensaje: 'Error al obtener estadísticas' });
   }
 });
