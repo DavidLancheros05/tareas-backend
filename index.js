@@ -74,6 +74,15 @@ app.delete('/tareas/:id', async (req, res) => {
   }
 });
 
+app.get('/tareas', async (req, res) => {
+  try {
+    const tareas = await Tarea.find(); // busca todas las tareas en MongoDB
+    res.json(tareas); // devuelve la lista en JSON
+  } catch (error) {
+    res.status(500).json({ error: 'Error cargando tareas' });
+  }
+});
+
 server.listen(port, () => {
   console.log(`Servidor corriendo en http://localhost:${port}`);
 });
