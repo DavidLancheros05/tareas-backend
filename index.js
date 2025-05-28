@@ -79,3 +79,23 @@ app.delete('/tareas/:id', async (req, res) => {
 app.listen(port, () => {
   console.log(`Servidor backend corriendo en http://localhost:${port}`);
 });
+
+
+
+
+
+
+
+//neuvo
+
+app.get('/estadisticas', async (req, res) => {
+  try {
+    const total = await Tarea.countDocuments();
+    const completadas = await Tarea.countDocuments({ completada: true });
+    const pendientes = total - completadas;
+
+    res.json({ total, completadas, pendientes });
+  } catch (error) {
+    res.status(500).json({ error: 'Error al obtener estadísticas' });
+  }
+});
